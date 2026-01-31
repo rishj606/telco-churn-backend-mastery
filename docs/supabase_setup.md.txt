@@ -1,0 +1,4 @@
+# Supabase Setup Notes
+- Project URL: [your URL]
+- Connection tested: Yes
+- Public access enabled for Power BI.

@@ -9,12 +9,12 @@ Create a "Backend Mastery" portfolio project that moves beyond standard CSV repo
 - **Cloud Database Infrastructure**: Hosting data on Supabase (PostgreSQL).
 - **SQL-First ETL**: Performing data cleaning and transformation using SQL Views (ELT methodology) instead of Power Query.
 - **Star Schema Modeling**: Architecting a PL-300 compliant data model in Power BI.
-- **Advanced Analytics**: (Planned V3) Python integration for churn prediction.
+- **Advanced UX**: Designing a "Cyberpunk Glass" dark-mode interface for executive decision-making.
 
 ## Tech Stack
 - **Database**: Supabase (PostgreSQL 15) - Cloud-hosted on AWS.
 - **ETL/Transformation**: SQL (Views & Type Casting).
-- **Visualization**: Power BI Desktop.
+- **Visualization**: Power BI Desktop (DAX, Custom Themes).
 - **Environment**: Hybrid (Personal PC for DB management, Work Laptop constraints bypassed via Cloud Auth).
 
 ---
@@ -49,18 +49,41 @@ To adhere to **Star Schema** principles, I split the single flat table into 4 no
 
 ![Power BI Star Schema](screenshots/screenshot-v1-pbi-star-schema.png)
 
-### Key Decisions & Challenges
-- **Challenge**: Power BI `Import` mode failed on `TotalCharges` due to whitespace.
-- **Solution**: Fixed upstream in SQL (`telco_churn_clean`) rather than using Power Query `Replace Errors`, ensuring data integrity at the source.
-- **Challenge**: Corporate firewall blocked standard Port 5432.
-- **Solution**: Utilized Supabase **Transaction Pooler (Port 6543)** and configured SSL handshake settings to bypass restriction.
+---
+
+## V2: Dashboard Design & Advanced Measures (2026-02-08)
+V2 delivers the "Executive Command Center" interface, moving away from standard reports to a modern "Cyberpunk Glass" aesthetic while solving complex DAX challenges.
+
+### 1. Design System: "Cyberpunk Glass"
+- **Concept**: High-contrast Dark Mode (`#0F172A`) with Neon Accents (`#F43F5E` Red / `#38BDF8` Blue) to signal urgent/safe metrics.
+- **Glassmorphism**: Utilized visual shadow effects (`Blur: 15px`, `Preset: Center`) to create "glowing" cards without using external background images.
+- **UX Layout**: "F-Pattern" layout starting with Critical KPIs (Top) → Retention Split (Left) → Actionable Breakdown (Right).
+
+![V2 Dashboard Dark Mode](screenshots/screenshot-v2-dashboard-dark.png)
+
+### 2. Business Logic (DAX)
+Implemented key retention metrics beyond simple counts:
+- **Churn Rate %**: `DIVIDE([Churned Customers], [Total Customers], 0)`
+- **Revenue Risk**: Calculated monthly financial impact of churn.
+- **Filter Propagation Challenge**: Calculating `Revenue Risk` required summing a column in the Dimension table (`dim_contract`) filtered by a status in the Fact table (`fact_churn`).
+    - *Issue*: Standard 1:* relationships do not allow Fact filters to propagate up to Dimensions.
+    - *Solution*: Implemented `CROSSFILTER` in the measure to temporarily enable bi-directional filtering for this specific calculation.
+
+### 3. Technical Hurdles & Solutions (V2)
+- **Challenge**: "Host Failed to Respond" errors during initial connection.
+    - *Root Cause*: Strict SSL verification failure on self-signed cloud certificates.
+    - *Fix*: Disabled "Encrypt Connections" in Data Source Settings to bypass handshake failure.
+- **Challenge**: Slicers looked outdated (white dropdowns) against the dark theme.
+    - *Fix*: Implemented "New Button Slicers" with custom states (Navy Default / Electric Blue Selected) to match the dashboard aesthetic.
+- **Challenge**: `dim_contract` view failed in Power BI despite clean SQL.
+    - *Root Cause*: SQL View `dim_contract` was referencing `telco_churn_raw` instead of `telco_churn_clean`, re-introducing the empty string error.
+    - *Fix*: Updated all 4 Dimension Views to strictly source from `telco_churn_clean`, enforcing the data quality pipeline.
 
 ---
 
 ## Future Roadmap
-- **V2**: Dashboard Design & Churn Measures (DAX).
-- **V3**: Python Integration (Correlation Analysis).
-- **V4**: Row-Level Security (RLS) & Final UX.
+- **V3**: Python Integration (Correlation Analysis Heatmap).
+- **V4**: Row-Level Security (RLS) & Final UX Polish.
 
 ---
 **Author**: [rishj606](https://github.com/rishj606)

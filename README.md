@@ -10,7 +10,7 @@ Create a "Backend Mastery" portfolio project that moves beyond standard CSV repo
 - **SQL-First ETL**: Performing data cleaning and transformation using SQL Views (ELT methodology).
 - **Predictive Analytics (Python)**: Building a Logistic Regression pipeline to predict churn probability and segment customers (Clustering).
 - **Automated Write-Back**: Pushing model predictions back to the database for real-time dashboarding.
-- **Advanced UX**: Designing a "Cyberpunk Glass" dark-mode interface in Power BI.
+- **Advanced UX**: Designing a "Cyberpunk Glass" dark-mode interface in Power BI with Drill-through capabilities.
 
 ## Tech Stack
 - **Database**: Supabase (PostgreSQL 15) - Cloud-hosted on AWS.
@@ -108,8 +108,56 @@ Before trusting the model, I ran SQL validation queries to verify the "Risk Buck
 
 ---
 
-## Future Roadmap
-- **V4**: Final Integration. Connecting Power BI to the new `predictions_churn` table and visualizing the "At Risk" segments.
+## V4: Predictive Integration & Customer 360 (Completed 2026-02-12)
+V4 completes the user journey by connecting Power BI to the Python-generated `predictions_churn` table and building two critical new pages: a high-level **Predictive Analytics** dashboard and a granular **Customer Profile** view with Drill-through capabilities.
+
+### 1. Connecting Python Predictions to Power BI
+- **Integration**: Connected the `predictions_churn` table from Supabase to the Power BI model.
+- **Relationship**: Established a 1:1 relationship between `dim_customer` and `predictions_churn` using `customer_id`.
+- **Logic**: Used `RELATED()` DAX functions to pull `Churn Probability` and `Cluster Name` into the main model context.
+
+### 2. Page 1: Predictive Analytics Dashboard
+Built a strategic view to visualize the Machine Learning outputs.
+- **Risk Segmentation**: Visualized the 3 K-Means clusters ("Risky Newbies", "Loyal VIPs", "Average Users") to show the distribution of the customer base.
+- **Churn Probability Histogram**: A distribution chart showing how many customers fall into each risk bucket (<30%, 30-70%, >70%).
+- **Key Insight**: Identified that "Risky Newbies" (Cluster 1) account for 60% of potential churn revenue.
+
+![Predictive Analytics Page](screenshots/screenshot-v4-predictive-page.png)
+
+### 3. Page 2: "Customer 360" Profile (Drill-Through)
+Designed a specific layout to answer "Why is *this* customer risky?" for support agents.
+- **Drill-Through Architecture**:
+  - Added `customerID` from `dim_customer` to the drill-through well.
+  - Enabled "Keep all filters" to preserve context from the main dashboard.
+- **Visual Components**:
+  - **Service Stack**: A dynamic list of all services (Internet, Streaming, Support) for the selected customer.
+  - **Financial Context**: A detailed table showing Contract Type, Payment Method, and Charges.
+  - **Live Risk Score (Gauge)**: A visual representation of the ML model's `churn_probability`.
+    - *Color Logic*: **Green** (<30%), **Yellow** (30-70%), **Red** (>70%).
+  - **Loyalty Scatter**: A strategic plot of **Tenure vs. Monthly Charges** with reference lines (Avg Cost $65, Loyal Threshold 24 Months) to instantly place the customer in a value quadrant.
+
+![Customer Profile Page](screenshots/screenshot-v4-customer-profile-page.png)
+
+### 4. Technical Challenges & Solutions (V4)
+- **Challenge**: **"Blank Table" Bug on Drill-Through**.
+  - *Symptom*: When drilling through, the "Service Stack" worked, but the "Financial Context" table was blank for some customers (e.g., `0019-EFAEP`) but not others (`0018-NYROU`).
+  - *Root Cause 1 (Model)*: The relationship between `fact_churn` and `dim_contract` was **Many-to-One (Single Direction)**. Filters flowed *down* to the Fact table but not *back up* to the Dimension.
+  - *Root Cause 2 (Data)*: Hidden whitespace in IDs (e.g., `'0019-EFAEP '` vs `'0019-EFAEP'`) caused silent join failures.
+  - *Fix*: Changed Cross-Filter Direction to **Both** for 1:1 relationships and applied `Trim` transformation in Power Query to all ID columns.
+- **Challenge**: **Drill-Through Button Missing**.
+  - *Symptom*: Right-clicking a chart didn't show the "Drill-through" option.
+  - *Fix*: Added `customerID` from *multiple tables* (`dim_customer`, `fact_churn`) into the drill-through well to ensure the option appears regardless of which table the source visual uses.
+
+![Relationship Fix](screenshots/screenshot-v4-relationship-fix.png)
+
+---
+
+## Final Project Status
+**COMPLETE**. The project successfully demonstrates a full modern data stack:
+1.  **Ingest**: Raw CSV $\rightarrow$ Cloud DB (Supabase).
+2.  **Transform**: SQL Views for Star Schema.
+3.  **Analyze**: Python ML for Churn Prediction & Segmentation.
+4.  **Visualize**: Power BI with Predictive Dashboards and Drill-through Actionability.
 
 ---
 **Author**: [rishj606](https://github.com/rishj606)

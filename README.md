@@ -1,25 +1,27 @@
 # Telco Customer Churn & Retention Analytics
 
-**End-to-end data engineering and analytics project designed to identify customer churn drivers and calculate retention metrics. Built using a hybrid cloud stack (Supabase PostgreSQL + Power BI) to demonstrate backend data modeling and frontend visualization mastery.**
+**End-to-end data engineering and analytics project designed to identify customer churn drivers and calculate retention metrics. Built using a hybrid cloud stack (Supabase PostgreSQL + Python + Power BI) to demonstrate backend data modeling, predictive analytics, and frontend visualization mastery.**
 
 ---
 
 ## Project Goal
 Create a "Backend Mastery" portfolio project that moves beyond standard CSV reporting by implementing:
 - **Cloud Database Infrastructure**: Hosting data on Supabase (PostgreSQL).
-- **SQL-First ETL**: Performing data cleaning and transformation using SQL Views (ELT methodology) instead of Power Query.
-- **Star Schema Modeling**: Architecting a PL-300 compliant data model in Power BI.
-- **Advanced UX**: Designing a "Cyberpunk Glass" dark-mode interface for executive decision-making.
+- **SQL-First ETL**: Performing data cleaning and transformation using SQL Views (ELT methodology).
+- **Predictive Analytics (Python)**: Building a Logistic Regression pipeline to predict churn probability and segment customers (Clustering).
+- **Automated Write-Back**: Pushing model predictions back to the database for real-time dashboarding.
+- **Advanced UX**: Designing a "Cyberpunk Glass" dark-mode interface in Power BI.
 
 ## Tech Stack
 - **Database**: Supabase (PostgreSQL 15) - Cloud-hosted on AWS.
-- **ETL/Transformation**: SQL (Views & Type Casting).
+- **Analytics Engine**: Python 3.12 (Pandas, Scikit-Learn, SQLAlchemy).
+- **ETL/Transformation**: SQL (Views & Type Casting) + Python (Feature Engineering).
 - **Visualization**: Power BI Desktop (DAX, Custom Themes).
-- **Environment**: Hybrid (Personal PC for DB management, Work Laptop constraints bypassed via Cloud Auth).
+- **Environment**: Hybrid (VS Code for Python, Supabase Cloud for DB, Power BI for Frontend).
 
 ---
 
-## V1: Backend Setup & Star Schema (2026-02-03)
+## V1: Backend Setup & Star Schema (Completed 2026-02-03)
 V1 focuses on establishing the data infrastructure. Instead of importing a flat CSV into Power BI, raw data was loaded into a cloud database, cleaned via SQL, and modeled into a Star Schema.
 
 ### 1. Database Architecture (Supabase)
@@ -31,59 +33,83 @@ V1 focuses on establishing the data infrastructure. Instead of importing a flat 
 ![SQL Cleaning Logic](screenshots/screenshot-v1-sql-cleaning.png)
 
 ### 2. Dimensional Modeling (SQL Views)
-To adhere to **Star Schema** principles, I split the single flat table into 4 normalized SQL Views directly in the database. This ensures Power BI receives a pre-modeled structure ("Push to Source" philosophy).
-
+To adhere to **Star Schema** principles, I split the single flat table into 4 normalized SQL Views directly in the database ("Push to Source" philosophy).
 - **Fact Table**: `fact_churn` (Keys + Metrics).
-- **Dimensions**:
-  - `dim_customer` (Demographics: Gender, SeniorCitizen, Partner).
-  - `dim_services` (Product details: Internet, Phone, Streaming).
-  - `dim_contract` (Financials: Payment Method, Monthly Charges).
+- **Dimensions**: `dim_customer`, `dim_services`, `dim_contract`.
 
 ![Supabase Schema](screenshots/screenshot-v1-supabase-schema.png)
 
 ### 3. Power BI Data Model
-- Connected Power BI to Supabase using the **PostgreSQL Connector** (Transaction Pooler Port 6543).
-- Established **1:1 Relationships** between Fact and Dimensions (Snapshot dataset).
+- Connected Power BI to Supabase using the **PostgreSQL Connector**.
+- Established **1:1 Relationships** between Fact and Dimensions.
 - Configured Cross-Filter direction to prioritize Dimension-to-Fact filtering.
-- Hidden surrogate keys (`customerID`) in the Fact table to prevent reporting errors.
 
 ![Power BI Star Schema](screenshots/screenshot-v1-pbi-star-schema.png)
 
 ---
 
-## V2: Dashboard Design & Advanced Measures (2026-02-08)
-V2 delivers the "Executive Command Center" interface, moving away from standard reports to a modern "Cyberpunk Glass" aesthetic while solving complex DAX challenges.
+## V2: Dashboard Design & Advanced Measures (Completed 2026-02-08)
+V2 delivers the "Executive Command Center" interface, utilizing a modern "Cyberpunk Glass" aesthetic.
 
-### 1. Design System: "Cyberpunk Glass"
-- **Concept**: High-contrast Dark Mode (`#0F172A`) with Neon Accents (`#F43F5E` Red / `#38BDF8` Blue) to signal urgent/safe metrics.
-- **Glassmorphism**: Utilized visual shadow effects (`Blur: 15px`, `Preset: Center`) to create "glowing" cards without using external background images.
-- **UX Layout**: "F-Pattern" layout starting with Critical KPIs (Top) → Retention Split (Left) → Actionable Breakdown (Right).
+### 1. Design System
+- **Theme**: High-contrast Dark Mode (`#0F172A`) with Neon Accents (`#F43F5E` Red / `#38BDF8` Blue).
+- **Glassmorphism**: Utilized visual shadow effects (`Blur: 15px`) to create "glowing" cards.
+- **UX Layout**: "F-Pattern" layout starting with Critical KPIs.
 
 ![V2 Dashboard Dark Mode](screenshots/screenshot-v2-dashboard-dark.png)
 
 ### 2. Business Logic (DAX)
-Implemented key retention metrics beyond simple counts:
 - **Churn Rate %**: `DIVIDE([Churned Customers], [Total Customers], 0)`
-- **Revenue Risk**: Calculated monthly financial impact of churn.
-- **Filter Propagation Challenge**: Calculating `Revenue Risk` required summing a column in the Dimension table (`dim_contract`) filtered by a status in the Fact table (`fact_churn`).
-    - *Issue*: Standard 1:* relationships do not allow Fact filters to propagate up to Dimensions.
-    - *Solution*: Implemented `CROSSFILTER` in the measure to temporarily enable bi-directional filtering for this specific calculation.
+- **Revenue Risk**: Calculated utilizing `CROSSFILTER` to enable bi-directional filtering for specific financial measures where standard 1:* relationships failed.
 
-### 3. Technical Hurdles & Solutions (V2)
-- **Challenge**: "Host Failed to Respond" errors during initial connection.
-    - *Root Cause*: Strict SSL verification failure on self-signed cloud certificates.
-    - *Fix*: Disabled "Encrypt Connections" in Data Source Settings to bypass handshake failure.
-- **Challenge**: Slicers looked outdated (white dropdowns) against the dark theme.
-    - *Fix*: Implemented "New Button Slicers" with custom states (Navy Default / Electric Blue Selected) to match the dashboard aesthetic.
-- **Challenge**: `dim_contract` view failed in Power BI despite clean SQL.
-    - *Root Cause*: SQL View `dim_contract` was referencing `telco_churn_raw` instead of `telco_churn_clean`, re-introducing the empty string error.
-    - *Fix*: Updated all 4 Dimension Views to strictly source from `telco_churn_clean`, enforcing the data quality pipeline.
+---
+
+## V3: Python Analytics & Predictive Modeling (Completed 2026-02-09)
+V3 shifts from descriptive analytics (what happened?) to **predictive analytics** (who will churn?). I built a Python pipeline to calculate churn probability and segment customers, writing the results back to the database for visualization.
+
+### 1. The Analytics Pipeline (`analytics.py`)
+- **Connection**: Used `SQLAlchemy` with `NullPool` to handle the Supabase Transaction Pooler (Port 6543) connection stability.
+- **Feature Engineering**:
+  - Handled missing numeric values in `TotalCharges`.
+  - Converted binary `Churn` (Yes/No) to numeric (1/0) for modeling.
+- **Machine Learning Models**:
+  - **Segmentation (K-Means Clustering)**: Grouped customers into 3 distinct personas based on Tenure, Monthly Bill, and Total Spend.
+    - *Result*: Identified "Risky Newbies" (Cluster 1) vs. "Loyal VIPs" (Cluster 0).
+  - **Prediction (Logistic Regression)**: Trained a model to assign a `churn_probability` (0-100%) to every customer.
+
+![Python Code Snippet](screenshots/screenshot-v3-python-code.png)
+
+### 2. Automated Write-Back (The "Loop")
+Instead of leaving the analysis in a Jupyter Notebook, the script automatically writes the results back to a production table (`predictions_churn`) in Supabase.
+- **Schema**: `customer_id` | `churn_prob` | `predicted_label` | `cluster_name`
+- **Result**: The database now contains forward-looking metrics ready for Power BI consumption.
+
+![Supabase Predictions Table](screenshots/screenshot-v3-supabase-predictions.png)
+
+### 3. Model Validation (SQL Logic Check)
+Before trusting the model, I ran SQL validation queries to verify the "Risk Buckets" made business sense.
+- **Findings**:
+  - **High Risk Bucket (>60% prob)**: Avg Tenure = **5.2 Months** (New customers).
+  - **Safe Bucket (<20% prob)**: Avg Tenure = **50.2 Months** (Loyal customers).
+- **Verdict**: The model correctly correlates low tenure and month-to-month contracts with high risk, without needing complex One-Hot Encoding for this iteration.
+
+![Model Validation Query](screenshots/screenshot-v3-risk-validation.png)
+
+### 4. Technical Hurdles & Solutions (V3)
+- **Challenge**: `FATAL: password authentication failed` despite correct credentials.
+    - *Root Cause*: Special characters (like `@`) in the password were breaking the connection string parsing.
+    - *Fix*: Reset database password to alphanumeric-only string (`TelcoProject...`) to ensure stability.
+- **Challenge**: "Host name not known" when using Direct Connection (Port 5432).
+    - *Root Cause*: Supabase Free Tier restricts Direct Connections to IPv6, which my local network didn't support.
+    - *Fix*: Switched to the **Transaction Pooler (Port 6543)** and updated `SQLAlchemy` to use `poolclass=NullPool` to prevent connection handling errors.
+- **Challenge**: Model predicting ~50% probability for all users.
+    - *Root Cause*: Initial feature set was too generic.
+    - *Fix*: Validated that even with generic features, the buckets were distinct (5.2 vs 50.2 tenure). Decided to stick with "Risk Buckets" rather than over-engineering with One-Hot Encoding for V3, as the business insight was already clear.
 
 ---
 
 ## Future Roadmap
-- **V3**: Python Integration (Correlation Analysis Heatmap).
-- **V4**: Row-Level Security (RLS) & Final UX Polish.
+- **V4**: Final Integration. Connecting Power BI to the new `predictions_churn` table and visualizing the "At Risk" segments.
 
 ---
 **Author**: [rishj606](https://github.com/rishj606)

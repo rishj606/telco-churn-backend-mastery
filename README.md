@@ -2,6 +2,8 @@
 
 **End-to-end data engineering and analytics project designed to identify customer churn drivers and calculate retention metrics. Built using a hybrid cloud stack (Supabase PostgreSQL + Python + Power BI) to demonstrate backend data modeling, predictive analytics, and frontend visualization mastery.**
 
+Kaggle Dataset: https://www.kaggle.com/datasets/blastchar/telco-customer-churn
+
 ---
 
 ## Project Goal
